@@ -1,0 +1,17 @@
+graph LR
+A[Subscriber Requests Live Stream] --> B[FastAPI Session Service]
+B --> C[Payload Generator + HMAC]
+C --> D[Guaranteed Window Scheduler]
+D --> E[ML Watermark Encoder]
+E --> F[Watermarked Stream Delivery]
+
+G[Pirated Clip Found] --> H[Investigator Dashboard Upload]
+H --> I[Detection Service]
+I --> J[Frame Sampler every 30th]
+J --> K[Watermark Decoder CNN]
+K --> L[HMAC Verification]
+L --> M[Session Attribution in SQLite]
+M --> N[Forensic PDF Report]
+
+B --> O[(SQLite + JSON Records)]
+I --> O

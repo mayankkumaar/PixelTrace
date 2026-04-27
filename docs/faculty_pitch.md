@@ -1,0 +1,3 @@
+# Short Faculty Presentation Version
+
+We are building an ML-powered forensic watermarking system for live sports streaming where every subscriber receives a uniquely watermarked stream. The watermark is invisible and automatically embedded inside selected video frames using a guaranteed 30-frame window strategy. If piracy occurs through screen recording or illegal redistribution, the watermark can be extracted from the leaked clip to identify the exact subscriber responsible for the leak. This provides traceability, legal attribution, and piracy deterrence without interrupting the viewing experience.
