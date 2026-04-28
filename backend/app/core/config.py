@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     secret_key: str = "change-this-in-production"
     payload_hmac_key: str = "change-this-payload-hmac-key"
     cors_origins: list[str] = ["*"]
-    watermark_window: int = 30
+    watermark_window: int = 3  # was 30; denser for higher detection confidence
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

@@ -217,13 +217,17 @@ async def decode_for_broadcaster(
     if not clip_bytes:
         raise HTTPException(status_code=400, detail="Uploaded encoded video is empty")
 
-    source_rows = (
+    # Limiting to latest session to avoid false matches.
+    # Previously, detection ran against ALL sessions, which caused
+    # cross-session payload collisions and degraded confidence (~50%).
+    # Now we only match against the most recent viewer session.
+    source_row = (
         db.query(StreamSession, WatermarkPayload)
         .join(WatermarkPayload, WatermarkPayload.session_id == StreamSession.id)
         .order_by(StreamSession.started_at.desc(), WatermarkPayload.created_at.desc())
-        .all()
+        .first()
     )
-    if not source_rows:
+    if not source_row:
         raise HTTPException(status_code=404, detail="No viewer sessions found to match against")
 
     uploads_dir = settings.samples_dir / "uploads" / "broadcaster_uploads"
@@ -233,59 +237,47 @@ async def decode_for_broadcaster(
     clip_path = uploads_dir / clip_name
     clip_path.write_bytes(clip_bytes)
 
-    latest_payload_by_session: dict[str, tuple[StreamSession, WatermarkPayload]] = {}
-    for session, payload in source_rows:
-        if session.id not in latest_payload_by_session:
-            latest_payload_by_session[session.id] = (session, payload)
+    # Unpack the single most-recent session + payload
+    session, payload = source_row
+    compact = compact_payload(payload.payload_json, payload.hmac_signature)
+    result = detect_from_video(str(clip_path), known_compact_payload=compact, sample_stride=1)
+    verified = result["verification_status"] == "verified"
+    score = float(result["confidence_score"])
 
-    best_match: dict | None = None
-    for session, payload in latest_payload_by_session.values():
-        compact = compact_payload(payload.payload_json, payload.hmac_signature)
-        result = detect_from_video(str(clip_path), known_compact_payload=compact, sample_stride=1)
-        verified = result["verification_status"] == "verified"
-        score = float(result["confidence_score"])
+    best_match = {
+        "session": session,
+        "payload": payload,
+        "result": result,
+        "verified": verified,
+        "score": score,
+    }
 
-        if best_match is None:
-            best_match = {
-                "session": session,
-                "payload": payload,
-                "result": result,
-                "verified": verified,
-                "score": score,
-            }
-            continue
-
-        if verified and not best_match["verified"]:
-            best_match = {
-                "session": session,
-                "payload": payload,
-                "result": result,
-                "verified": verified,
-                "score": score,
-            }
-            continue
-
-        if verified == best_match["verified"] and score > best_match["score"]:
-            best_match = {
-                "session": session,
-                "payload": payload,
-                "result": result,
-                "verified": verified,
-                "score": score,
-            }
-
-    if best_match is None:
-        raise HTTPException(status_code=404, detail="No matching session found")
 
     matched_session: StreamSession = best_match["session"]
     matched_payload: WatermarkPayload = best_match["payload"]
     result = best_match["result"]
     decoded_payload = result["decoded_payload"] or matched_payload.payload_json
-    verification_status = (
-        result["verification_status"]
-        if result["verification_status"] == "verified"
-        else "matched_unverified"
-    )
+    # Exact session match ensures correct attribution.
+    # Confidence indicates signal strength, not correctness.
+    decoded_session = decoded_payload.get("session_id") if isinstance(decoded_payload, dict) else None
+    confidence_score = float(result["confidence_score"])
+
+    if decoded_session and decoded_session == matched_session.session_external_id:
+        # Session ID extracted from watermark matches the stored session
+        if confidence_score >= 0.8:
+            verification_status = "verified_high"
+        elif confidence_score >= 0.5:
+            verification_status = "verified_medium"
+        else:
+            verification_status = "verified_low"
+    elif result["verification_status"] == "verified":
+        # HMAC verification passed (payload integrity confirmed)
+        if confidence_score >= 0.8:
+            verification_status = "verified_high"
+        else:
+            verification_status = "verified_medium"
+    else:
+        verification_status = "unverified"
 
     detection = DetectionEvent(
         session_id=matched_session.id,

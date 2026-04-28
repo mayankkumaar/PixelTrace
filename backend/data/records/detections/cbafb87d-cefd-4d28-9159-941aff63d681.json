@@ -1,0 +1,19 @@
+{
+  "confidence_score": 0.35011574074074076,
+  "decoded_payload": {
+    "device_id": "web_device_A1",
+    "ip_hash": "b133bb72875221fe70c292d4c0f831fb3312233431497acfa565aa8bb2ca1b90",
+    "segment_id": "seg_01",
+    "session_id": "sess_dba07e68e9d1",
+    "timestamp": "2026-04-28T04:47:50.995005+00:00",
+    "user_id": "viewer_1001",
+    "version": "v1"
+  },
+  "detected_at": "2026-04-28T04:48:46",
+  "id": "cbafb87d-cefd-4d28-9159-941aff63d681",
+  "report_path": "E:\\Google-Solution\\backend\\samples\\reports\\forensic_report_cbafb87d-cefd-4d28-9159-941aff63d681.pdf",
+  "session_external_id": "sess_dba07e68e9d1",
+  "session_id": "9a5514ff-de03-4ff2-a484-dc1de1a57845",
+  "source_clip_name": "broadcaster_0fa42c71592d4929.mp4",
+  "verification_status": "verified_low"
+}
