@@ -97,8 +97,8 @@ Google-Solution/
 │   └── requirements.txt
 ├── dashboard/
 │   └── src/
-│       ├── streamlit_app.py    # PixelTrace Detection UI
-│       └── app.py              # Viewer/Broadcaster Portal
+│       ├── streamlit_app.py    # Unified PixelTrace Streamlit UI
+│       └── app.py              # Legacy Viewer/Broadcaster Portal
 ├── ml/                         # ML model training (HiDDeN/SteganoGAN)
 ├── scripts/
 │   ├── demo_pipeline.py        # CLI end-to-end demo
@@ -136,32 +136,22 @@ streamlit run src/streamlit_app.py
 
 Open: **http://localhost:8501**
 
-### 3. Viewer/Broadcaster Portal
-
-```powershell
-cd dashboard
-.\.venv\Scripts\Activate.ps1
-streamlit run src/app.py --server.port 8502
-```
-
-Open: **http://localhost:8502**
-
 ---
 
 ## 🎬 Demo Flow
 
 ### Step 1 — Encode a Watermarked Video
 
-- Open **http://localhost:8502** → Viewer tab
+- Open **http://localhost:8501** → Viewer tab
 - Enter a Viewer Login ID (e.g. `viewer_1001`)
-- Click **"Generate Personalized Encoded Video"**
-- Download the encoded video
+- Click **"🎬 Encode Video"**
+- Download the encoded video from the preview panel
 
 ### Step 2 — Detect the Leak Source
 
-- Open **http://localhost:8501** (PixelTrace)
+- Open **http://localhost:8501** → Detection tab
 - Upload the encoded video from Step 1
-- Click **"🔍 Detect Source"**
+- Click **"🔍  Detect Source"**
 - View the attribution result
 
 ---

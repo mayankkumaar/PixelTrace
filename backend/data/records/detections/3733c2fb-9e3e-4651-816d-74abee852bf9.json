@@ -1,0 +1,19 @@
+{
+  "confidence_score": 0.5572943777238071,
+  "decoded_payload": {
+    "device_id": "web_device_A1",
+    "ip_hash": "b133bb72875221fe70c292d4c0f831fb3312233431497acfa565aa8bb2ca1b90",
+    "segment_id": "seg_01",
+    "session_id": "sess_c529978b4e0b",
+    "timestamp": "2026-04-28T09:52:06.769778+00:00",
+    "user_id": "viewer_1001",
+    "version": "v1"
+  },
+  "detected_at": "2026-04-28T09:53:42",
+  "id": "3733c2fb-9e3e-4651-816d-74abee852bf9",
+  "report_path": "E:\\PixelTrace\\backend\\samples\\reports\\forensic_report_3733c2fb-9e3e-4651-816d-74abee852bf9.pdf",
+  "session_external_id": "sess_c529978b4e0b",
+  "session_id": "4ab9559b-d330-436c-998b-5d28ef1c9847",
+  "source_clip_name": "broadcaster_5980687f13384efc.mp4",
+  "verification_status": "verified_medium"
+}

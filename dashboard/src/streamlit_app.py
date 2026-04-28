@@ -7,13 +7,17 @@ Integrates with the FastAPI backend running at http://localhost:8000.
 
 import requests
 import streamlit as st
+from typing import cast
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 BACKEND_URL = "http://localhost:8000"
-DETECTION_ENDPOINT = f"{BACKEND_URL}/api/v1/portal/broadcaster/decode"
+API_BASE = f"{BACKEND_URL}/api/v1"
+DETECTION_ENDPOINT = f"{API_BASE}/portal/broadcaster/decode"
+ENCODE_ENDPOINT = f"{API_BASE}/portal/viewer/encode"
 REQUEST_TIMEOUT_SECONDS = 600  # video analysis can be slow on large files
 
 
@@ -68,22 +72,13 @@ header[data-testid="stHeader"] {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
-.hero-accent {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #ec4899 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
 .hero-subtitle {
     font-size: 1.1rem;
     font-weight: 400;
     color: #64748b;
-
     max-width: 560px;
     margin: 0 auto;
-
     text-align: center;
-
     display: inline-block;
 }
 .hero-divider {
@@ -361,6 +356,23 @@ footer {visibility: hidden;}
     font-size: 0.9rem;
     color: #94a3b8;
 }
+
+/* ── Inputs ── */
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stTextArea"] textarea {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    color: #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 0.6rem 0.75rem !important;
+}
+[data-testid="stTextInput"] label,
+[data-testid="stNumberInput"] label,
+[data-testid="stTextArea"] label {
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+}
 </style>
 """
 
@@ -369,7 +381,7 @@ footer {visibility: hidden;}
 # API Integration
 # ---------------------------------------------------------------------------
 
-def call_detection_api(file) -> dict:
+def call_detection_api(file: UploadedFile) -> dict:
     """
     Send the uploaded video to the broadcaster/decode endpoint.
 
@@ -428,6 +440,85 @@ def call_detection_api(file) -> dict:
         return {"ok": False, "json": None, "error": f"Unexpected error: {exc}"}
 
 
+def call_encode_api(
+    *,
+    viewer_login_id: str,
+    subscriber_name: str,
+    device_id: str,
+    ip_address: str,
+    segment_id: str,
+    source_video: UploadedFile,
+) -> dict:
+    """
+    Send the viewer encode request and return status + payload.
+
+    Returns dict with:
+        ok    – True if the HTTP request succeeded (2xx).
+        json  – Parsed JSON body (None on network errors).
+        error – Human-readable error message (empty on success).
+    """
+    data = {
+        "viewer_login_id": viewer_login_id,
+        "subscriber_name": subscriber_name,
+        "device_id": device_id,
+        "ip_address": ip_address,
+        "segment_id": segment_id,
+        "use_project_raw_video": "false",
+        "project_raw_video_name": "pirated_match.mp4",
+    }
+    files = {
+        "source_video": (
+            source_video.name,
+            source_video.getvalue(),
+            source_video.type or "video/mp4",
+        )
+    }
+
+    try:
+        response = requests.post(
+            ENCODE_ENDPOINT,
+            data=data,
+            files=files,
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+
+        try:
+            body = response.json()
+        except ValueError:
+            body = None
+
+        if response.ok:
+            return {"ok": True, "json": body, "error": ""}
+        msg = ""
+        if body and isinstance(body, dict):
+            msg = body.get("message", body.get("detail", ""))
+        return {
+            "ok": False,
+            "json": body,
+            "error": msg or f"Server returned HTTP {response.status_code}",
+        }
+    except requests.exceptions.ConnectionError:
+        return {
+            "ok": False,
+            "json": None,
+            "error": (
+                "Cannot connect to the backend. "
+                f"Is it running at {BACKEND_URL}?"
+            ),
+        }
+    except requests.exceptions.Timeout:
+        return {
+            "ok": False,
+            "json": None,
+            "error": (
+                "Request timed out. The video may be too large "
+                "or the server is under heavy load."
+            ),
+        }
+    except requests.exceptions.RequestException as exc:
+        return {"ok": False, "json": None, "error": f"Unexpected error: {exc}"}
+
+
 # ---------------------------------------------------------------------------
 # UI Renderers
 # ---------------------------------------------------------------------------
@@ -437,22 +528,16 @@ def render_header() -> None:
     st.markdown(
         """
         <div class="hero-container">
-            <div class="hero-badge">Forensic Intelligence Platform</div>
-            <h1 class="hero-title">
-                Pixel<span class="hero-accent">Trace</span>
-            </h1>
-            <p class="hero-subtitle">
-                AI-powered forensic watermarking for live stream
-                piracy detection — identify the source in seconds.
-            </p>
-            <div class="hero-divider"></div>
-        </div>
-        """,
+            <h1 class="hero-title">🎬 PixelTrace</h1>
+            <p class="hero-subtitle">AI-powered forensic watermarking for piracy detection</p>
+             <div class="hero-divider"></div>
+         </div>
+         """,
         unsafe_allow_html=True,
     )
 
 
-def render_upload() -> object | None:
+def render_upload() -> UploadedFile | None:
     """
     Render the upload card and return the uploaded file (or None).
     """
@@ -637,71 +722,52 @@ def render_how_it_works() -> None:
         """
         <div class="glass-card" style="margin-top:0.5rem;">
             <div class="glass-card-header">
-                <span class="dot dot-blue"></span>Detection Pipeline
+                <span class="dot dot-blue"></span>How PixelTrace Works
             </div>
             <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:2rem;">
-                PixelTrace embeds an <strong style="color:#e2e8f0;">invisible,
-                viewer-unique watermark</strong> into every live stream.
-                When pirated footage surfaces, the system extracts this
-                watermark to trace the leak back to a specific user session.
+                PixelTrace unifies viewer watermarking and broadcaster
+                verification in a single, secure workflow.
             </p>
             <div class="timeline">
                 <div class="timeline-item">
                     <div class="timeline-dot"></div>
                     <div class="timeline-step-title">
-                        Stream Initiated
+                        Step 1 — Encode a Unique Watermark
                     </div>
                     <div class="timeline-step-desc">
-                        A viewer logs into the platform and begins watching
-                        the live stream. Each session is assigned a unique
-                        cryptographic identifier.
+                        A viewer uploads a video and receives a
+                        uniquely watermarked copy tied to their session.
                     </div>
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-dot" style="background:#7c3aed;"></div>
                     <div class="timeline-step-title">
-                        Watermark Embedded
+                        Step 2 — Upload a Suspected Clip
                     </div>
                     <div class="timeline-step-desc">
-                        An imperceptible forensic watermark — unique to
-                        the viewer — is embedded into the video frames in
-                        real time. It survives re-encoding, cropping,
-                        scaling, and screen capture.
+                        Broadcasters submit a leaked or pirated clip
+                        for forensic inspection.
                     </div>
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-dot" style="background:#a855f7;"></div>
                     <div class="timeline-step-title">
-                        Pirated Clip Captured
+                        Step 3 — Multi-frame Decoding
                     </div>
                     <div class="timeline-step-desc">
-                        When an unauthorised re-stream or screen recording
-                        surfaces on the internet, a sample clip is
-                        captured for forensic analysis.
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot" style="background:#d946ef;"></div>
-                    <div class="timeline-step-title">
-                        Watermark Extracted
-                    </div>
-                    <div class="timeline-step-desc">
-                        The clip is uploaded to PixelTrace. Our AI engine
-                        reconstructs the embedded signal and extracts the
-                        watermark payload — even from heavily degraded or
-                        compressed footage.
+                        PixelTrace analyzes multiple frames to recover
+                        the embedded payload with resilience to edits.
                     </div>
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-dot" style="background:#ec4899;"></div>
                     <div class="timeline-step-title">
-                        Source Identified
+                        Step 4 — Source Identified (or Rejected)
                     </div>
                     <div class="timeline-step-desc">
-                        The payload is matched against the session database
-                        to pinpoint the exact viewer account, device, and
-                        timestamp. A court-ready forensic report is
-                        generated automatically.
+                        The decoded watermark is matched against
+                        session records to confirm the source or
+                        report a clean no-match result.
                     </div>
                 </div>
             </div>
@@ -731,8 +797,8 @@ def main() -> None:
 
     # Page config — must be the first Streamlit command
     st.set_page_config(
-        page_title="PixelTrace – Live Stream Piracy Detection",
-        page_icon="🔎",
+        page_title="PixelTrace – AI-powered forensic watermarking",
+        page_icon="🎬",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
@@ -740,11 +806,210 @@ def main() -> None:
     # Inject custom CSS
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+    if "encoded_video_bytes" not in st.session_state:
+        st.session_state["encoded_video_bytes"] = None
+    if "encoded_video_name" not in st.session_state:
+        st.session_state["encoded_video_name"] = None
+    if "latest_encode_response" not in st.session_state:
+        st.session_state["latest_encode_response"] = None
+    if "encode_error" not in st.session_state:
+        st.session_state["encode_error"] = None
+
     # Hero header
     render_header()
 
     # Tabs
-    detection_tab, how_tab = st.tabs(["  Detection  ", "  How It Works  "])
+    viewer_tab, detection_tab, how_tab = st.tabs(
+        ["  Viewer  ", "  Detection  ", "  How It Works  "]
+    )
+
+    # ── Viewer Tab ──────────────────────────────────────────────────────
+    with viewer_tab:
+        _pad_l, content, _pad_r = st.columns([1, 4, 1])
+        with content:
+            left_col, right_col = st.columns(2, gap="large")
+
+            with left_col:
+                st.markdown(
+                    '<div class="glass-card">'
+                    '<div class="glass-card-header">'
+                    '<span class="dot dot-green"></span>Viewer Input'
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+
+                with st.form("viewer_encode_form", clear_on_submit=False):
+                    viewer_login_id = st.text_input("Viewer Login ID", "viewer_1001")
+                    subscriber_name = st.text_input("Subscriber Name", "Viewer 1001")
+                    device_id = st.text_input("Device ID", "web_device_A1")
+                    ip_address = st.text_input("IP Address", "10.21.34.56")
+                    segment_id = st.text_input("Segment ID", "seg_01")
+                    source_video = st.file_uploader(
+                        "Upload Video for Encoding",
+                        type=["mp4", "mov", "avi", "mkv"],
+                        key="viewer_source",
+                    )
+                    if source_video is not None:
+                        source_video = cast(UploadedFile, source_video)
+
+                    encode_clicked = st.form_submit_button(
+                        "🎬  Encode Video",
+                        use_container_width=True,
+                    )
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+                if encode_clicked:
+                    st.session_state["encode_error"] = None
+
+                    if source_video is None:
+                        st.session_state["encode_error"] = (
+                            "Please upload a video to encode before continuing."
+                        )
+                    else:
+                        with st.spinner("Encoding watermark…"):
+                            result = call_encode_api(
+                                viewer_login_id=viewer_login_id,
+                                subscriber_name=subscriber_name,
+                                device_id=device_id,
+                                ip_address=ip_address,
+                                segment_id=segment_id,
+                                source_video=source_video,
+                            )
+
+                        if not result["ok"]:
+                            st.session_state["encode_error"] = result["error"]
+                        else:
+                            st.session_state["latest_encode_response"] = result["json"]
+
+                            download_url = result["json"].get(
+                                "encoded_video_download_url", ""
+                            )
+                            if download_url.startswith("http://") or download_url.startswith(
+                                "https://"
+                            ):
+                                full_download_url = download_url
+                            else:
+                                full_download_url = f"{BACKEND_URL}{download_url}"
+
+                            download_response = requests.get(
+                                full_download_url, timeout=REQUEST_TIMEOUT_SECONDS
+                            )
+                            if not download_response.ok:
+                                st.session_state["encode_error"] = (
+                                    "Encoded video created, but download failed. "
+                                    f"({download_response.status_code})"
+                                )
+                            else:
+                                st.session_state["encoded_video_bytes"] = (
+                                    download_response.content
+                                )
+                                st.session_state["encoded_video_name"] = result["json"].get(
+                                    "encoded_video_name"
+                                )
+
+            with right_col:
+                st.markdown(
+                    '<div class="glass-card">'
+                    '<div class="glass-card-header">'
+                    '<span class="dot dot-blue"></span>Encoding Result'
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+
+                if st.session_state.get("encode_error"):
+                    st.markdown(
+                        f"""
+                        <div class="result-card result-card-warning">
+                            <div class="result-title result-title-warning">
+                                ⚠&ensp;Encoding Issue
+                            </div>
+                            <p style="color:#94a3b8; margin:0; font-size:0.9rem;">
+                                {st.session_state["encode_error"]}
+                            </p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                elif st.session_state.get("latest_encode_response"):
+                    st.markdown(
+                        """
+                        <div class="result-card result-card-success">
+                            <div class="result-title result-title-success">
+                                ✅&ensp;Encoding Complete
+                            </div>
+                            <p style="color:#94a3b8; margin:0; font-size:0.9rem;">
+                                The video has been watermarked successfully.
+                            </p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(
+                        "<p style='color:#64748b; margin:0;'>"
+                        "Encode a video to see results here.</p>",
+                        unsafe_allow_html=True,
+                    )
+
+                if st.session_state.get("latest_encode_response"):
+                    st.markdown(
+                        "<div style='height:1rem'></div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        '<div class="glass-card" style="padding:1.5rem;">'
+                        '<div class="glass-card-header">'
+                        '<span class="dot dot-green"></span>Encoding Metadata'
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.json(st.session_state["latest_encode_response"], expanded=False)
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                if st.session_state.get("encoded_video_bytes"):
+                    st.markdown(
+                        "<div style='height:1rem'></div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        '<div class="glass-card" style="padding:1.5rem;">'
+                        '<div class="glass-card-header">'
+                        '<span class="dot dot-blue"></span>Encoded Video Download'
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        "<p style='color:#94a3b8; margin:0 0 0.75rem;'>"
+                        "Download the personalized watermarked video.</p>",
+                        unsafe_allow_html=True,
+                    )
+                    st.download_button(
+                        label="⬇️  Download Encoded Video",
+                        data=st.session_state["encoded_video_bytes"],
+                        file_name=st.session_state.get("encoded_video_name")
+                        or "encoded_video.mp4",
+                        mime="video/mp4",
+                        use_container_width=True,
+                    )
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                if st.session_state.get("encoded_video_bytes"):
+                    st.markdown(
+                        "<div style='height:1rem'></div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        '<div class="glass-card" style="padding:1.5rem;">'
+                        '<div class="glass-card-header">'
+                        '<span class="dot dot-blue"></span>Encoded Video Preview'
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.video(st.session_state["encoded_video_bytes"])
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Detection Tab ────────────────────────────────────────────────────
     with detection_tab:
@@ -753,6 +1018,8 @@ def main() -> None:
 
         with content:
             uploaded_file = render_upload()
+            if uploaded_file is not None:
+                uploaded_file = cast(UploadedFile, uploaded_file)
 
             # Spacer
             st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)

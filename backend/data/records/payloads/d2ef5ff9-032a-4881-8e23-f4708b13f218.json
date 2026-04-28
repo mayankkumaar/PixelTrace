@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-04-28T09:35:24",
+  "hmac_signature": "b4275f352662976b6a7a5d0f437ed6002f0543e1125283ce635122b7e842102a",
+  "id": "d2ef5ff9-032a-4881-8e23-f4708b13f218",
+  "payload_json": {
+    "device_id": "web_device_A1",
+    "ip_hash": "b133bb72875221fe70c292d4c0f831fb3312233431497acfa565aa8bb2ca1b90",
+    "segment_id": "seg_01",
+    "session_id": "sess_540ca994d3c7",
+    "timestamp": "2026-04-28T09:35:24.396835+00:00",
+    "user_id": "viewer_1001",
+    "version": "v1"
+  },
+  "session_id": "e47b4365-3c02-4a6f-910b-9a4be34ef15a"
+}
