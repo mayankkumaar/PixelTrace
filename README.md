@@ -4,16 +4,39 @@
   <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
   <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
   <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Google%20Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" />
 </p>
 
 <h1 align="center">🔎 PixelTrace</h1>
 <p align="center">
-  <strong>AI-Powered Forensic Watermarking for Live Stream Piracy Detection</strong>
+  <strong>AI-Powered Forensic Watermarking · Piracy Source Identification · Cloud-Deployed</strong>
 </p>
 <p align="center">
-  Embeds invisible, viewer-unique watermarks into live video frames.<br/>
-  When pirated footage surfaces, extracts the watermark to identify the exact source — in seconds.
+  Invisible, viewer-unique watermarks are embedded into live video frames.<br/>
+  When pirated footage surfaces, PixelTrace extracts the watermark and pinpoints the exact leak source — in seconds.
 </p>
+
+---
+
+## 🌐 Live Demo (Cloud Hosted)
+
+> **Try it now →** [**http://34.93.68.211:8501**](http://34.93.68.211:8501)
+
+| | |
+|---|---|
+| ☁️ **Hosted on** | Google Cloud Compute Engine |
+| ⚡ **Capabilities** | Encoding + Detection + Forensic Reporting |
+| 🔄 **Status** | Fully functional end-to-end system |
+
+No setup required — open the link and start encoding or detecting watermarks instantly.
+
+---
+
+## 🎥 Demo Video
+
+[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-Google_Drive-4285F4?style=for-the-badge&logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1lonjstAJj5P5mf9MGj-p8vP4I0vGK4mt/view)
+
+> Full walkthrough: encoding a watermarked video → simulating piracy → detecting the leak source.
 
 ---
 
@@ -29,6 +52,19 @@ Live stream piracy costs the media industry **billions annually**. When a viewer
 - Aggregates signal across **100+ frames** to cancel noise
 - Identifies the exact **user, device, session, and timestamp**
 - Generates a **court-ready forensic PDF report**
+
+---
+
+## 🎯 Why This Project Stands Out
+
+| Strength | Description |
+|----------|-------------|
+| 🛡️ **Real-world problem** | Tackles live stream piracy — a multi-billion-dollar industry pain point |
+| 🤖 **AI + Security** | Combines computer vision, signal processing, and cryptographic signing |
+| ☁️ **Live cloud deployment** | Not just a local prototype — fully deployed on Google Cloud VM |
+| 🔄 **End-to-end system** | Encoding → detection → forensic reporting, all integrated and working |
+| 📊 **Attack-resistant** | Survives re-encoding, cropping, scaling, and noise injection |
+| 📄 **Forensic-grade output** | Auto-generated PDF reports suitable for legal attribution |
 
 ---
 
@@ -71,13 +107,14 @@ Live stream piracy costs the media industry **billions annually**. When a viewer
 | **Reports** | ReportLab (PDF) |
 | **Frontend** | Streamlit (Detection UI + Viewer/Broadcaster Portal) |
 | **Security** | HMAC-SHA256 payload signing |
+| **Deployment** | Google Cloud Compute Engine (VM) |
 
 ---
 
 ## 📂 Project Structure
 
 ```
-Google-Solution/
+PixelTrace/
 ├── backend/
 │   ├── app/
 │   │   ├── api/                # FastAPI route handlers
@@ -110,7 +147,7 @@ Google-Solution/
 
 ---
 
-## ▶️ How to Run
+## ▶️ How to Run Locally
 
 ### 1. Backend
 
@@ -124,7 +161,7 @@ uvicorn app.main:app --reload --port 8000
 
 Verify: **http://localhost:8000/docs**
 
-### 2. Detection UI (PixelTrace)
+### 2. Detection UI (Streamlit)
 
 ```powershell
 cd dashboard
@@ -136,23 +173,25 @@ streamlit run src/streamlit_app.py
 
 Open: **http://localhost:8501**
 
+> 💡 **Or skip local setup entirely** — use the [Live Demo](http://34.93.68.211:8501) instead.
+
 ---
 
 ## 🎬 Demo Flow
 
 ### Step 1 — Encode a Watermarked Video
 
-- Open **http://localhost:8501** → Viewer tab
+- Open the app → **Viewer** tab
 - Enter a Viewer Login ID (e.g. `viewer_1001`)
 - Click **"🎬 Encode Video"**
 - Download the encoded video from the preview panel
 
 ### Step 2 — Detect the Leak Source
 
-- Open **http://localhost:8501** → Detection tab
+- Switch to the **Detection** tab
 - Upload the encoded video from Step 1
-- Click **"🔍  Detect Source"**
-- View the attribution result
+- Click **"🔍 Detect Source"**
+- View the attribution result and download the forensic report
 
 ---
 
@@ -226,7 +265,7 @@ Interactive docs: **http://localhost:8000/docs**
 | `No viewer sessions found` | Encode a video first via Viewer Portal |
 | Upload timeout | Try a shorter clip (<30s) |
 
-
+---
 
 ## 📄 Documentation
 
