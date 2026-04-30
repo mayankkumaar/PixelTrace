@@ -9,11 +9,12 @@
 
 <h1 align="center">🔎 PixelTrace</h1>
 <p align="center">
-  <strong>AI-Powered Forensic Watermarking · Piracy Source Identification · Cloud-Deployed</strong>
+  <strong>AI-Powered Forensic Watermarking for Live Sports Streaming Piracy Detection</strong>
 </p>
 <p align="center">
-  Invisible, viewer-unique watermarks are embedded into live video frames.<br/>
-  When pirated footage surfaces, PixelTrace extracts the watermark and pinpoints the exact leak source — in seconds.
+  Built for live sports streaming platforms — embeds invisible, subscriber-unique watermarks into video frames.<br/>
+  When pirated footage surfaces via screen recording or illegal redistribution,<br/>
+  PixelTrace extracts the watermark and identifies the exact subscriber responsible — in seconds.
 </p>
 
 ---
@@ -42,11 +43,11 @@ No setup required — open the link and start encoding or detecting watermarks i
 
 ## 🚀 Problem
 
-Live stream piracy costs the media industry **billions annually**. When a viewer screen-records or re-streams protected content, there's no reliable way to trace the leak back to a specific subscriber.
+Live sports streaming piracy costs broadcasters and platforms **billions annually**. When a subscriber screen-records a match or illegally re-streams it, there's no reliable way to trace the leak back to the specific account responsible.
 
 ## 💡 Solution
 
-**PixelTrace** embeds a cryptographically signed, invisible watermark unique to each viewer session into video frames. When pirated footage is found, the system:
+**PixelTrace** embeds a cryptographically signed, invisible watermark unique to each subscriber session into live sports video frames. When pirated footage is found, the system:
 
 - Extracts the watermark using **multi-frame soft voting**
 - Aggregates signal across **100+ frames** to cancel noise
@@ -59,7 +60,7 @@ Live stream piracy costs the media industry **billions annually**. When a viewer
 
 | Strength | Description |
 |----------|-------------|
-| 🛡️ **Real-world problem** | Tackles live stream piracy — a multi-billion-dollar industry pain point |
+| 🛡️ **Real-world problem** | Tackles live sports streaming piracy — a multi-billion-dollar industry pain point |
 | 🤖 **AI + Security** | Combines computer vision, signal processing, and cryptographic signing |
 | ☁️ **Live cloud deployment** | Not just a local prototype — fully deployed on Google Cloud VM |
 | 🔄 **End-to-end system** | Encoding → detection → forensic reporting, all integrated and working |
@@ -278,5 +279,5 @@ Interactive docs: **http://localhost:8000/docs**
 ---
 
 <p align="center">
-  <sub>Built with ❤️ for forensic intelligence and content protection.</sub>
+  <sub>Built with ❤️ for forensic intelligence and sports broadcasting protection.</sub>
 </p>
